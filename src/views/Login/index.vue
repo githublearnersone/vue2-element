@@ -17,6 +17,11 @@
                     <el-input type="password" v-model="ruleForm.password" autocomplete="off" minlength="6" maxlength="20"></el-input>
                 </el-form-item>
 
+                <el-form-item prop="passwords" class="item-form" v-show="model === 'register'">
+                    <label>重复密码</label>
+                    <el-input type="password" v-model="ruleForm.passwords" autocomplete="off" minlength="6" maxlength="20"></el-input>
+                </el-form-item>
+
                 <el-form-item prop="code" class="item-form">
                     <label>验证码</label>
                     
@@ -37,38 +42,55 @@
     </div>
 </template>
 <script>
-import { stripscript } from '@/utils/validate.js';
+import { stripscript, validateEmail, validatePass, validateVCode } from '@/utils/validate';
 export default {
     name: 'login',
     data(){
         //验证用户名
         var validateUserName = (rule, value, callback) => {
-            let reg = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/;
             if (value === '') {
                 callback(new Error('请输入用户名'));
-            } else if(!reg.test(value)) {
+            } else if(validateEmail(value)) {
                 callback(new Error('用户名格式有误'));
             } else {
                 callback(); //true
             }
         };
+
         //验证密码
         var validatePassWord = (rule, value, callback) => {
-            let reg = /^(?!\D+$)(?![^a-zA-Z]+$)\S{6,20}$/;
+            //过滤后的数据
+            this.ruleForm.password = stripscript(value);
+            value = this.ruleForm.password;
+
             if (value === '') {
                 callback(new Error('请输入密码'));
-            } else if (!reg.test(value)) {
+            } else if (validatePass(value)) {
                 callback(new Error('密码为6至20位数字+字母'));
             } else {
                 callback();
             }
         };
+        //验证重复密码
+        var validatePassWords = (rule, value, callback) => {
+            //过滤后的数据
+            this.ruleForm.passwords = stripscript(value);
+            value = this.ruleForm.passwords;
+
+            if (value === '') {
+                callback(new Error('请再次输入密码'));
+            } else if (value != this.ruleForm.password) {
+                callback(new Error('重复密码不正确'));
+            } else {
+                callback();
+            }
+        };
+
         //验证验证码
-        var validateCode = (rule, value, callback) => {
-            let reg = /^[a-z0-9]{6}$/;
+        var validateCode = (rule, value, callback) => {            
             if (value === '') {
                 return callback(new Error('请输入验证码'));
-            } else if (!reg.test(value)) {
+            } else if (validateVCode(value)) {
                 callback(new Error('验证码格式有误'));
             } else {
                 callback();
@@ -76,13 +98,15 @@ export default {
         };
         return{
             menuTab: [
-                { txt: '登录', current: true },
-                { txt: '注册', current: false },
+                { txt: '登录', current: true, type: 'login' },
+                { txt: '注册', current: false,type: 'register' },
             ],
+            model: 'login',
             //表单的数据
             ruleForm: {
                 username: '',
                 password: '',
+                passwords: '',
                 code: ''
             },
             rules: {
@@ -91,6 +115,9 @@ export default {
                 ],
                 password: [
                     { validator: validatePassWord, trigger: 'blur' }
+                ],
+                passwords: [
+                    { validator: validatePassWords, trigger: 'blur' }
                 ],
                 code: [
                     { validator: validateCode, trigger: 'blur' }
@@ -109,6 +136,7 @@ export default {
             });
             //高光
             data.current = true;
+            this.model = data.type;
         },
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
