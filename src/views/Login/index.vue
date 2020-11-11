@@ -42,12 +42,17 @@
     </div>
 </template>
 <script>
+import axios from 'axios';
+import { isRef, reactive, ref, onMounted } from '@vue/composition-api';
 import { stripscript, validateEmail, validatePass, validateVCode } from '@/utils/validate';
 export default {
     name: 'login',
-    data(){
+
+    setup(props, { refs }) {
+        //放置data数据、生命周期、自定义函数
+        
         //验证用户名
-        var validateUserName = (rule, value, callback) => {
+        let validateUserName = (rule, value, callback) => {
             if (value === '') {
                 callback(new Error('请输入用户名'));
             } else if(validateEmail(value)) {
@@ -58,10 +63,10 @@ export default {
         };
 
         //验证密码
-        var validatePassWord = (rule, value, callback) => {
+        let validatePassWord = (rule, value, callback) => {
             //过滤后的数据
-            this.ruleForm.password = stripscript(value);
-            value = this.ruleForm.password;
+            ruleForm.password = stripscript(value);
+            value = ruleForm.password;
 
             if (value === '') {
                 callback(new Error('请输入密码'));
@@ -72,14 +77,17 @@ export default {
             }
         };
         //验证重复密码
-        var validatePassWords = (rule, value, callback) => {
+        let validatePassWords = (rule, value, callback) => {
+            //如果模块为login，直接通过
+            if(model.value === 'login') { callback(); }
+
             //过滤后的数据
-            this.ruleForm.passwords = stripscript(value);
-            value = this.ruleForm.passwords;
+            ruleForm.passwords = stripscript(value);
+            value = ruleForm.passwords;
 
             if (value === '') {
                 callback(new Error('请再次输入密码'));
-            } else if (value != this.ruleForm.password) {
+            } else if (value != ruleForm.password) {
                 callback(new Error('重复密码不正确'));
             } else {
                 callback();
@@ -87,7 +95,7 @@ export default {
         };
 
         //验证验证码
-        var validateCode = (rule, value, callback) => {            
+        let validateCode = (rule, value, callback) => {            
             if (value === '') {
                 return callback(new Error('请输入验证码'));
             } else if (validateVCode(value)) {
@@ -96,50 +104,61 @@ export default {
                 callback();
             }
         };
-        return{
-            menuTab: [
-                { txt: '登录', current: true, type: 'login' },
-                { txt: '注册', current: false,type: 'register' },
+
+        /**
+         * 声明数据
+         */
+        //对象用reactive
+        const menuTab = reactive([
+            { txt: '登录', current: true, type: 'login' },
+            { txt: '注册', current: false,type: 'register' },
+        ]);
+        //基础类型用ref
+        const model = ref('login');
+
+        ////表单的数据
+        const ruleForm = reactive({
+            username: '',
+            password: '',
+            passwords: '',
+            code: ''
+        });
+        const rules = reactive({
+            username: [
+                { validator: validateUserName, trigger: 'blur' }
             ],
-            model: 'login',
-            //表单的数据
-            ruleForm: {
-                username: '',
-                password: '',
-                passwords: '',
-                code: ''
-            },
-            rules: {
-                username: [
-                    { validator: validateUserName, trigger: 'blur' }
-                ],
-                password: [
-                    { validator: validatePassWord, trigger: 'blur' }
-                ],
-                passwords: [
-                    { validator: validatePassWords, trigger: 'blur' }
-                ],
-                code: [
-                    { validator: validateCode, trigger: 'blur' }
-                ]
-            }
-        }
-    },
-    created(){},
-    //挂载完成后自动执行
-    mounted(){},
-    //写函数
-    methods: {
-        toggleMenu(data){
-            this.menuTab.forEach(elem => {
+            password: [
+                { validator: validatePassWord, trigger: 'blur' }
+            ],
+            passwords: [
+                { validator: validatePassWords, trigger: 'blur' }
+            ],
+            code: [
+                { validator: validateCode, trigger: 'blur' }
+            ]
+        });
+
+        //声明函数
+        const toggleMenu = (data => {
+            menuTab.forEach(elem => {
                 elem.current = false;
             });
             //高光
             data.current = true;
-            this.model = data.type;
-        },
-        submitForm(formName) {
-            this.$refs[formName].validate((valid) => {
+            model.value = data.type;
+        });
+        const submitForm = (formName => {
+
+            // 为给定 ID 的 user 创建请求
+            axios.get('/user?ID=12345')
+            .then(function (response) {
+                console.log(response);
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+
+            refs[formName].validate((valid) => {
                 if (valid) {
                     alert('submit!');
                 } else {
@@ -147,7 +166,24 @@ export default {
                     return false;
                 }
             });
-        }
+        });
+
+        /**
+         * 生命周期
+         */
+        //挂载完成后自动执行
+        onMounted(() => {
+
+        });
+
+        return {
+            menuTab,
+            model,
+            ruleForm,
+            rules,
+            toggleMenu,
+            submitForm
+        };
     },
 }
 </script>
