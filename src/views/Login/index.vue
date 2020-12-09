@@ -30,7 +30,7 @@
                             <el-input v-model.number="ruleForm.code" minlength="6" maxlength="6"></el-input>
                         </el-col>
                         <el-col :span="9">
-                            <el-button type="success" class="block">获取验证码</el-button>
+                            <el-button type="success" class="block" @click="getSms()">获取验证码</el-button>
                         </el-col>
                     </el-row>
                 </el-form-item>
@@ -42,7 +42,7 @@
     </div>
 </template>
 <script>
-import axios from 'axios';
+import { Login, GetSms } from '@/api/login';
 import { isRef, reactive, ref, onMounted } from '@vue/composition-api';
 import { stripscript, validateEmail, validatePass, validateVCode } from '@/utils/validate';
 export default {
@@ -147,16 +147,31 @@ export default {
             data.current = true;
             model.value = data.type;
         });
+
+        const getSms = (() => {
+            GetSms();
+        });
+
+        //提交
         const submitForm = (formName => {
 
-            // 为给定 ID 的 user 创建请求
-            axios.get('/user?ID=12345')
-            .then(function (response) {
-                console.log(response);
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
+            // // 为给定 ID 的 user 创建请求
+            // axios.request({
+            //     // `url` 是用于请求的服务器 URL
+            //     url: '/user',
+
+            //     // `method` 是创建请求时使用的方法
+            //     method: 'get', // default
+            //     data: {
+            //         firstName: 'Fred'
+            //     },
+            // })
+            // .then(function (response) {
+            //     console.log(response);
+            // })
+            // .catch(function (error) {
+            //     console.log(error);
+            // });
 
             refs[formName].validate((valid) => {
                 if (valid) {
@@ -173,7 +188,7 @@ export default {
          */
         //挂载完成后自动执行
         onMounted(() => {
-
+            //Login();
         });
 
         return {
@@ -182,7 +197,8 @@ export default {
             ruleForm,
             rules,
             toggleMenu,
-            submitForm
+            submitForm,
+            getSms,
         };
     },
 }
